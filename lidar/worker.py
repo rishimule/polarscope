@@ -17,7 +17,9 @@ from .transform import filter_scan, polar_to_xy
 
 C1_BAUDRATE = 460800
 SERIAL_TIMEOUT_S = 1
-SCAN_WATCHDOG_S = 1.0  # max time without seeing a start_flag before declaring stall
+SCAN_WATCHDOG_S = 2.0  # max time without seeing a start_flag before declaring stall
+MOTOR_PWM = 660       # default motor PWM (A-series + C1)
+MOTOR_SPINUP_S = 1.2  # let motor reach steady RPM before first scan
 
 
 class LidarWorker(QObject):
@@ -107,10 +109,23 @@ class LidarWorker(QObject):
         self._hz_ema = 0.0
         self._scan_idx = 0
 
+        # Spin up motor. RPLIDAR motor is controlled via DTR + optional PWM.
+        # Without this, start_scan() returns a descriptor but no measurements
+        # ever arrive — serial reads time out and parsing yields IndexError.
+        try:
+            self._lidar.set_motor_pwm(MOTOR_PWM)
+        except Exception as exc:
+            self.error_occurred.emit(f"Failed to start motor: {exc!r}")
+            self._shutdown_driver()
+            self.status_changed.emit("disconnected")
+            return
+        time.sleep(MOTOR_SPINUP_S)
+
         try:
             scan_gen = self._lidar.start_scan()
         except Exception as exc:
-            self.error_occurred.emit(f"Failed to start scan: {exc}")
+            self.error_occurred.emit(f"Failed to start scan: {exc!r}")
+            self._safe_stop_motor()
             self._shutdown_driver()
             self.status_changed.emit("disconnected")
             return
@@ -121,12 +136,14 @@ class LidarWorker(QObject):
         try:
             self._run_scan_loop(scan_gen)
         except Exception as exc:
-            self.error_occurred.emit(f"Lidar disconnected: {exc}")
+            self.error_occurred.emit(f"Lidar disconnected: {exc!r}")
+            self._safe_stop_motor()
             self._shutdown_driver()
             self.status_changed.emit("disconnected")
             return
         finally:
             self._safe_stop()
+            self._safe_stop_motor()
 
         if self._lidar is not None:
             self.status_changed.emit("connected (idle)")
@@ -207,8 +224,16 @@ class LidarWorker(QObject):
             except Exception:
                 pass
 
+    def _safe_stop_motor(self) -> None:
+        if self._lidar is not None:
+            try:
+                self._lidar.set_motor_pwm(0)
+            except Exception:
+                pass
+
     def _shutdown_driver(self) -> None:
         self._safe_stop()
+        self._safe_stop_motor()
         if self._lidar is not None:
             try:
                 self._lidar.disconnect()
