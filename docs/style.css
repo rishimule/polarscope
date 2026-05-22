@@ -339,3 +339,22 @@ code, pre { font-family: var(--font-mono); }
   border-radius: 4px;
   color: var(--text);
 }
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.site-footer__row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+.site-footer a { color: var(--muted); }
+.site-footer a:hover { color: var(--accent); }
+
+@media (min-width: 640px) {
+  .site-footer__row { flex-direction: row; justify-content: space-between; text-align: left; }
+}
