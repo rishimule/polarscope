@@ -93,6 +93,7 @@ class Sidebar(QFrame):
         self._snapshot_btn.setEnabled(False)
         self._record_btn = QPushButton("Record CSV")
         self._record_btn.setCheckable(True)
+        self._record_btn.setEnabled(False)
         layout.addWidget(self._snapshot_btn)
         layout.addWidget(self._record_btn)
 
@@ -132,15 +133,29 @@ class Sidebar(QFrame):
     def set_state(self, state: str) -> None:
         self._state_label.setText(state.capitalize())
         self._led.set_state(state)
-        connected = state in ("connected", "connected (idle)", "scanning")
+        connected = state in (
+            "connected", "connected (idle)", "connected (warning)", "scanning"
+        )
         scanning = state == "scanning"
         self._connect_btn.setVisible(not connected)
+        self._connect_btn.setEnabled(self._port_combo.isEnabled() and not connected)
         self._disconnect_btn.setVisible(connected)
         self._start_btn.setVisible(not scanning)
         self._start_btn.setEnabled(connected and not scanning)
         self._stop_btn.setVisible(scanning)
-        if state == "disconnected" and self._record_btn.isChecked():
+        # Record only while actively scanning — prevents orphan empty CSVs.
+        self._record_btn.setEnabled(scanning)
+        if not scanning and self._record_btn.isChecked():
             self._record_btn.setChecked(False)
+
+    def set_connect_busy(self, busy: bool) -> None:
+        """Debounce: disable Connect while a connect attempt is in flight."""
+        if busy:
+            self._connect_btn.setEnabled(False)
+        else:
+            self._connect_btn.setEnabled(
+                self._port_combo.isEnabled() and self._connect_btn.isVisible()
+            )
 
     def enable_snapshot(self) -> None:
         self._snapshot_btn.setEnabled(True)

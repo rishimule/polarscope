@@ -22,6 +22,12 @@ python main.py
 - Baud rate is fixed at 460800 (C1 spec).
 - Port shows up as `/dev/cu.usbserial-*`.
 
+## Driver library
+
+The original design called for `pyrplidarsdk`, but no PyPI wheel exists. The
+implementation uses `pyrplidar` (0.1.2) instead — same standard-SCAN command
+path the C1 supports, per-measurement streaming API.
+
 ## Tests
 
 ```bash

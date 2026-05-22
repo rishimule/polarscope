@@ -80,9 +80,9 @@ class LidarPlot(pg.PlotWidget):
     @Slot(object)
     def update_points(self, xy: np.ndarray) -> None:
         if xy is None or len(xy) == 0:
-            self._scatter.setData([], [])
+            self._scatter.setData(x=[], y=[])
             return
         self._scatter.setData(x=xy[:, 0], y=xy[:, 1])
 
     def clear_points(self) -> None:
-        self._scatter.setData([], [])
+        self._scatter.setData(x=[], y=[])

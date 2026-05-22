@@ -36,7 +36,9 @@ class CsvRecorder:
             for a, d, q in zip(angles_deg, distances_m, qualities)
         )
         self._writer.writerows(rows)
-        self._fh.flush()
+        # Note: deliberate no-flush. Per-scan flush blocked the scan loop under
+        # disk pressure; rely on close() to flush. Crash-mid-record may lose
+        # the trailing OS-buffered window, acceptable for visualization use.
 
     def stop(self) -> None:
         if self._fh is not None:
