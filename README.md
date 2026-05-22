@@ -1,4 +1,4 @@
-# RPLIDAR C1 Live Viewer
+# PolarScope — RPLIDAR C1 Live Viewer
 
 A dark-mode macOS desktop app for visualizing live 2D scans from a Slamtec RPLIDAR C1 over USB. Built with PySide6 + pyqtgraph.
 
