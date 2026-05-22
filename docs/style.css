@@ -134,6 +134,7 @@ code, pre { font-family: var(--font-mono); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   padding: 12px 20px;
   border-radius: 8px;
   font-size: 15px;
@@ -142,6 +143,7 @@ code, pre { font-family: var(--font-mono); }
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, color 150ms ease;
 }
+.btn svg { display: block; }
 .btn--primary {
   background: var(--accent);
   color: var(--bg);
@@ -371,3 +373,10 @@ code, pre { font-family: var(--font-mono); }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
 }
+
+.gh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gh-link svg { display: block; }
