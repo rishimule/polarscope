@@ -55,6 +55,12 @@ When adding new worker methods that touch worker-owned state mid-scan, follow th
 - Range filter: 0.05 m – 12.0 m, quality > 0.
 - No global state. No singletons. Everything constructed in `main()` or `MainWindow.__init__`.
 
+## Tooling
+
+- **Prefer `gh` over `git` for anything that touches GitHub.** PRs, issues, releases, repo creation, checks, reviews, comments, gists — use the GitHub CLI. It authenticates once, returns structured output (`--json`), and avoids the browser round-trip. Examples: `gh pr create`, `gh pr view <n> --comments`, `gh issue list`, `gh run watch`, `gh release create`.
+- Use plain `git` for local-only operations: `commit`, `branch`, `log`, `diff`, `status`, `rebase`, `stash`, `worktree`. `gh` does not replace these.
+- When a task could be done with either a `git` remote command or a `gh` subcommand (e.g., creating a PR vs. pushing a branch and opening one in the browser), pick `gh` — the result is identical but scriptable.
+
 ## Testing
 
 ```bash
@@ -68,7 +74,7 @@ pytest -v
 
 ## What NOT to do
 
-- Do not commit `*.png` or `*.csv` artifacts — `.gitignore` excludes them. Exception: `Screenshot.png` for the README.
+- Do not commit `*.png` or `*.csv` artifacts — `.gitignore` excludes them. Exception: anything under `assets/` (whitelisted for the README demo gif, screenshot, raw recording).
 - Do not add per-scan `fh.flush()` to `CsvRecorder.write` — under disk pressure it stalls the scan loop. Rely on `close()` to flush.
 - Do not call `pyrplidar` methods from the UI thread.
 - Do not catch + swallow exceptions in the scan loop without surfacing via `error_occurred`.
