@@ -80,3 +80,4 @@ pytest -v
 - Do not catch + swallow exceptions in the scan loop without surfacing via `error_occurred`.
 - Do not add a "reconnect on failure" path without an explicit user gesture — silent reconnect masks hardware issues.
 - Do not bump the watchdog below 4 s.
+- Do not add `Co-Authored-By: Claude ...` (or any AI-attribution) trailer to commit messages. GitHub maps that email to the `claude` user and surfaces it in the repo's Contributors list, which the maintainer does not want. Commit as the maintainer only.
