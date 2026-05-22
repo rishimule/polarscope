@@ -108,7 +108,28 @@
             <h2>Built like a piece of instrumentation.</h2>
             <p class="muted">Four engineering decisions that make the C1 behave on macOS.</p>
           </div>
-          <ol class="arch__list"></ol>
+          <ol class="arch__list">
+            <li class="arch__item">
+              <span class="chip">lidar/worker.py</span>
+              <h3>We bypass <code>pyrplidar.scan_generator()</code>.</h3>
+              <p>The generator aborts on the first short serial read, and the C1 has ~200&nbsp;ms of startup lag after <code>SCAN</code>. We read raw 5-byte frames straight off <code>pyserial</code>.</p>
+            </li>
+            <li class="arch__item">
+              <span class="chip">lidar/worker.py</span>
+              <h3><code>dsrdtr=False</code> re-open on connect.</h3>
+              <p><code>pyrplidar</code> opens the serial with hardware flow control on, which blocks the C1's TX stream. We re-open the underlying <code>pyserial.Serial</code> without it.</p>
+            </li>
+            <li class="arch__item">
+              <span class="chip">lidar/worker.py</span>
+              <h3>4&nbsp;s watchdog, no silent reconnect.</h3>
+              <p>First-data delays and transient stalls both raise. Reconnects require an explicit user gesture so hardware issues stay visible.</p>
+            </li>
+            <li class="arch__item">
+              <span class="chip">ui/main_window.py</span>
+              <h3>DirectConnection + lock for the recorder.</h3>
+              <p>Record toggles must dispatch mid-scan — a <code>QueuedConnection</code> cannot. Cross-thread safety comes from <code>worker._recorder_lock</code>.</p>
+            </li>
+          </ol>
         </div>
       </section>
 
