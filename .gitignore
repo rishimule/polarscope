@@ -20,7 +20,7 @@ env/
 *.png
 *.csv
 !tests/**/*.csv
-!Screenshot.png
+!assets/**
 
 # AI agents / assistants
 .claude/

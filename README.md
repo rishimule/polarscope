@@ -2,15 +2,15 @@
 
 A dark-mode macOS desktop app for visualizing live 2D scans from a Slamtec RPLIDAR C1 over USB. Built with PySide6 + pyqtgraph.
 
-![RPLIDAR C1 Viewer screenshot](Screenshot.png)
+![PolarScope demo](assets/demo.gif)
 
 ## Features
 
-- Live polar plot of LIDAR returns at ~10 Hz with FPS and point-count readout
+- Live polar plot of LIDAR returns at ~10 Hz with scan-rate and point-count readout
 - One-click serial port discovery (filters to USB CDC/CP210x devices)
 - Connect / Disconnect / Start / Stop scan lifecycle with status LED
 - Save plot snapshot as PNG (Retina-aware, device-pixel resolution)
-- Record raw scans to CSV (`timestamp_iso, scan_index, angle_deg, distance_m, quality`)
+- Record raw scans to CSV (`timestamp_iso, scan_index, angle_deg, distance_m, quality`) with a blinking REC indicator while active
 - Range and quality filtering (5 cm – 12 m, quality > 0)
 - Background `QThread` worker — UI never blocks on serial I/O
 
@@ -43,12 +43,13 @@ python main.py
 ## Project layout
 
 ```
-lidar/        # serial worker, port discovery, polar→xy transform, CSV recorder
-ui/           # MainWindow, sidebar, plot widget, status bar
-theme.py      # dark-mode QPalette + stylesheet
-main.py       # entry point
-tests/        # pytest + pytest-qt suite
+lidar/          # serial worker, port discovery, polar→xy transform, CSV recorder
+ui/             # MainWindow, sidebar, plot widget, status bar
+theme.py        # dark-mode QPalette + stylesheet
+main.py         # entry point
+tests/          # pytest + pytest-qt suite
 tools/probe.py  # standalone serial probe for debugging
+assets/         # demo gif + screenshot + raw screen recording
 ```
 
 ## Implementation notes
