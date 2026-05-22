@@ -129,6 +129,14 @@ code, pre { font-family: var(--font-mono); }
   gap: 12px;
   justify-content: center;
 }
+.hero__note {
+  margin: 20px auto 0;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 520px;
+}
+.hero__note a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.hero__note a:hover { color: var(--text); }
 
 .btn {
   display: inline-flex;

@@ -4,6 +4,18 @@ A dark-mode macOS desktop app for visualizing live 2D scans from a Slamtec RPLID
 
 ![PolarScope demo](assets/demo.gif)
 
+## Download
+
+Latest release: **[v0.1.0](https://github.com/rishimule/polarscope/releases/latest)** — [`PolarScope-0.1.0.dmg`](https://github.com/rishimule/polarscope/releases/download/v0.1.0/PolarScope-0.1.0.dmg) (macOS, ~57 MB).
+
+The app is unsigned, so first launch is blocked by Gatekeeper. See `READ ME FIRST.txt` inside the DMG, or bypass directly:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/PolarScope.app
+```
+
+Prefer running from source? See [Setup](#setup).
+
 ## Features
 
 - Live polar plot of LIDAR returns at ~10 Hz with scan-rate and point-count readout
