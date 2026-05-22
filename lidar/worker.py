@@ -109,17 +109,24 @@ class LidarWorker(QObject):
         self._hz_ema = 0.0
         self._scan_idx = 0
 
-        # Spin up motor. RPLIDAR motor is controlled via DTR + optional PWM.
-        # Without this, start_scan() returns a descriptor but no measurements
-        # ever arrive — serial reads time out and parsing yields IndexError.
+        # Settle the device + spin up motor + flush stale bytes in the OS
+        # serial buffer (info/health responses, motor noise). Without the
+        # final flush, start_scan()'s descriptor read picks up leftover
+        # bytes and pyrplidar raises PyRPlidarProtocolError on sync mismatch.
         try:
+            try:
+                self._lidar.stop()
+            except Exception:
+                pass
+            time.sleep(0.05)
             self._lidar.set_motor_pwm(MOTOR_PWM)
+            time.sleep(MOTOR_SPINUP_S)
+            self._flush_serial_input()
         except Exception as exc:
             self.error_occurred.emit(f"Failed to start motor: {exc!r}")
             self._shutdown_driver()
             self.status_changed.emit("disconnected")
             return
-        time.sleep(MOTOR_SPINUP_S)
 
         try:
             scan_gen = self._lidar.start_scan()
@@ -230,6 +237,21 @@ class LidarWorker(QObject):
                 self._lidar.set_motor_pwm(0)
             except Exception:
                 pass
+
+    def _flush_serial_input(self) -> None:
+        """Drop bytes queued in OS serial buffer before issuing SCAN.
+
+        pyrplidar exposes no flush API; reach in once to its underlying
+        pyserial.Serial. Without this, leftover descriptor bytes from
+        prior commands (info/health) cause PyRPlidarProtocolError on
+        sync-byte mismatch.
+        """
+        if self._lidar is None:
+            return
+        try:
+            self._lidar.lidar_serial._serial.reset_input_buffer()
+        except Exception:
+            pass
 
     def _shutdown_driver(self) -> None:
         self._safe_stop()
