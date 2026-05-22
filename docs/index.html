@@ -11,6 +11,94 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <p class="container">PolarScope landing scaffold.</p>
+    <header class="site-header">
+      <div class="container site-header__row">
+        <a class="brand" href="#top">
+          <svg class="brand__mark" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+            <circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="9" cy="9" r="2" fill="currentColor"/>
+          </svg>
+          <span>PolarScope</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#quickstart">Quickstart</a>
+          <a href="https://github.com/rishimule/polarscope" rel="noopener">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="container hero__inner">
+          <p class="eyebrow">Open source · RPLIDAR C1 · macOS</p>
+          <h1 class="hero__title">Live RPLIDAR C1 scans on your Mac.</h1>
+          <p class="hero__sub">Sub-200&nbsp;ms startup, 460&nbsp;800&nbsp;baud, zero dropped frames. PySide6 + pyqtgraph.</p>
+          <div class="hero__cta">
+            <a class="btn btn--primary" href="https://github.com/rishimule/polarscope" rel="noopener">View on GitHub →</a>
+            <a class="btn btn--ghost" href="#quickstart">Quick start</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo">
+        <div class="container">
+          <figure class="demo__figure">
+            <img class="demo__media demo__media--motion" src="assets/demo.gif" width="900" height="563" alt="Live PolarScope capture showing dots on a polar plot rotating in real time as the LIDAR scans.">
+            <img class="demo__media demo__media--still" src="assets/screenshot.png" width="900" height="563" alt="Screenshot of the PolarScope window with a captured scan frame." loading="lazy">
+            <figcaption>Live capture from a Slamtec RPLIDAR C1 over USB-C.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="features" class="features">
+        <div class="container">
+          <h2>What you get.</h2>
+          <ul class="features__grid"></ul>
+        </div>
+      </section>
+
+      <section id="architecture" class="arch">
+        <div class="container arch__inner">
+          <div class="arch__intro">
+            <h2>Built like a piece of instrumentation.</h2>
+            <p class="muted">Four engineering decisions that make the C1 behave on macOS.</p>
+          </div>
+          <ol class="arch__list"></ol>
+        </div>
+      </section>
+
+      <section id="quickstart" class="quick">
+        <div class="container">
+          <h2>Quick start.</h2>
+          <div class="code-block">
+            <pre><code>git clone https://github.com/rishimule/polarscope.git
+cd polarscope
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt</code></pre>
+            <button type="button" class="copy" aria-label="Copy command">Copy</button>
+          </div>
+          <div class="code-block">
+            <pre><code>python main.py</code></pre>
+            <button type="button" class="copy" aria-label="Copy command">Copy</button>
+          </div>
+          <h3>Hardware</h3>
+          <ul class="hw">
+            <li>Slamtec RPLIDAR C1 (460&nbsp;800 baud, USB-C → CP210x UART).</li>
+            <li>macOS 11+ ships the Apple-signed CP210x driver — no install.</li>
+            <li>Device enumerates as <code>/dev/cu.usbserial-*</code>.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container site-footer__row">
+        <span>MIT licensed · Built with PySide6 + pyqtgraph</span>
+        <span><a href="https://github.com/rishimule/polarscope" rel="noopener">github.com/rishimule/polarscope</a></span>
+      </div>
+    </footer>
   </body>
 </html>
