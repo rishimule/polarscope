@@ -21,6 +21,7 @@ env/
 *.csv
 !tests/**/*.csv
 !assets/**
+!docs/assets/**
 
 # AI agents / assistants
 .claude/
