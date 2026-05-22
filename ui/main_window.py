@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from PySide6.QtCore import QMetaObject, QSize, Qt, QThread
+from PySide6.QtCore import QMetaObject, QSize, Qt, QThread, Signal
 from PySide6.QtGui import QCloseEvent, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -21,6 +21,9 @@ from ui.status_bar import TopBanner, attach_status_widgets
 
 
 class MainWindow(QMainWindow):
+    # Bridge signal to invoke worker.open_device(port) across thread boundary.
+    _request_open = Signal(str)
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("RPLIDAR C1 Viewer")
@@ -59,6 +62,7 @@ class MainWindow(QMainWindow):
     def _wire_signals(self) -> None:
         s, w = self._sidebar, self._worker
         s.connect_requested.connect(self._on_connect_clicked)
+        self._request_open.connect(w.open_device, Qt.QueuedConnection)
         s.disconnect_requested.connect(w.close_device, Qt.QueuedConnection)
         s.start_requested.connect(w.start_scan, Qt.QueuedConnection)
         s.stop_requested.connect(self._on_stop)
@@ -79,9 +83,7 @@ class MainWindow(QMainWindow):
         # Debounce: disable connect immediately so rapid clicks can't enqueue
         # multiple open_device calls (each would leak a serial handle).
         self._sidebar.set_connect_busy(True)
-        QMetaObject.invokeMethod(
-            self._worker, "open_device", Qt.QueuedConnection, port
-        )
+        self._request_open.emit(port)
 
     def _on_stop(self) -> None:
         # Direct, NOT a Qt slot — must bypass queued dispatch because scan loop
