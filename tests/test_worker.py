@@ -246,3 +246,48 @@ def test_record_started_unwritable_path_emits_record_failed(qapp, tmp_path):
     assert len(failures) == 1
     assert any("cannot record" in e.lower() for e in errors)
     assert worker._recorder is None
+
+
+def test_recording_started_mid_scan_writes_rows(qapp, serial_holder, tmp_path):
+    """Regression: record_started used to be a QueuedConnection slot that
+    couldn't dispatch while the scan loop held the worker event loop, so the
+    CSV ended up containing only its header. Worker must accept the recorder
+    handoff synchronously and start writing rows on the next emitted scan."""
+    meas = [
+        (True, 40, 0.0, 1000.0),
+        (False, 40, 90.0, 2000.0),
+        (False, 40, 180.0, 3000.0),
+        (True, 40, 0.0, 1100.0),  # boundary => emit first scan
+        (False, 40, 90.0, 2100.0),
+        (False, 40, 180.0, 3100.0),
+        (True, 40, 0.0, 1200.0),  # boundary => emit second scan
+        (False, 40, 90.0, 2200.0),
+    ]
+    worker = LidarWorker()
+    csv_path = tmp_path / "midscan.csv"
+
+    def install_recorder_after_first_read():
+        # Mimics the UI thread calling record_started while the scan loop is
+        # running. The worker_thread will be inside ser.read() / processing.
+        worker.record_started(str(csv_path))
+
+    serial_holder["serial"] = _FakeSerial(
+        _encode_stream(meas),
+        stop_callback=lambda: (install_recorder_after_first_read(), worker._stop_event.set()),
+        stop_after_reads=len(meas) + 1,
+    )
+    fake = _make_lidar()
+    with patch("lidar.worker.PyRPlidar", return_value=fake), \
+         patch("lidar.worker.MOTOR_SPINUP_S", 0.0), \
+         patch("lidar.worker.SCAN_WATCHDOG_S", 5.0):
+        worker.open_device("/dev/cu.usbserial-FAKE")
+        QCoreApplication.processEvents()
+        worker.start_scan()
+        # Flush + close the CSV (mimics user clicking Stop Recording after scan).
+        worker.record_stopped()
+
+    # CSV must contain header + at least one data row (final partial-scan flush
+    # on clean stop, with recorder installed before that emit).
+    lines = csv_path.read_text().strip().splitlines()
+    assert lines[0].startswith("timestamp_iso,scan_index,angle_deg")
+    assert len(lines) > 1, f"only header written; full file: {lines!r}"

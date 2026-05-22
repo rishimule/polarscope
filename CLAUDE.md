@@ -25,11 +25,13 @@ Entry point: `main.py`. Run with `python main.py` from an activated `.venv`.
 
 UI thread owns Qt widgets and the `QThread`. Worker thread owns the serial handle and runs the blocking scan loop. **All worker calls cross the thread boundary via `Qt.QueuedConnection`** — see `MainWindow._wire_signals`.
 
-Two exceptions:
-1. `_on_stop` directly sets `worker._stop_event` from the UI thread. Required because the scan loop blocks the worker's event loop, so queued slots can't be dispatched while scanning.
-2. `closeEvent` sets `_stop_event`, queues `close_device`, then `thread.wait(3000)` with `terminate()` fallback.
+Exceptions — all rooted in the scan loop blocking the worker's event loop:
 
-When adding new worker methods, decorate with `@Slot(...)` and invoke via `QueuedConnection` or `QMetaObject.invokeMethod`.
+1. `_on_stop` and `_on_disconnect_clicked` directly set `worker._stop_event` from the UI thread.
+2. `record_started` / `record_stopped` are connected with `Qt.DirectConnection` (not Queued). Cross-thread safety comes from `worker._recorder_lock`, which also wraps the recorder write in `_emit_scan` and the cleanup in `_shutdown_driver`. A QueuedConnection here is a load-bearing bug — the CSV would only ever contain its header because the slot couldn't dispatch mid-scan.
+3. `closeEvent` sets `_stop_event`, queues `close_device`, then `thread.wait(3000)` with `terminate()` fallback.
+
+When adding new worker methods that touch worker-owned state mid-scan, follow the recorder pattern: DirectConnection + a lock around the shared state. Otherwise, default to `@Slot(...)` + `QueuedConnection` / `QMetaObject.invokeMethod`.
 
 ## Hardware / protocol notes (load-bearing — don't "clean up")
 

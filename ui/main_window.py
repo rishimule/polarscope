@@ -68,8 +68,12 @@ class MainWindow(QMainWindow):
         s.stop_requested.connect(self._on_stop)
         s.refresh_requested.connect(self._on_refresh)
         s.snapshot_requested.connect(self._on_snapshot)
-        s.record_started.connect(w.record_started, Qt.QueuedConnection)
-        s.record_stopped.connect(w.record_stopped, Qt.QueuedConnection)
+        # DirectConnection (not Queued): the worker's scan loop blocks its event
+        # loop, so a queued record_started/stopped would never dispatch mid-scan
+        # and the CSV would only contain its header. The worker guards the
+        # recorder handoff with a lock for cross-thread safety.
+        s.record_started.connect(w.record_started, Qt.DirectConnection)
+        s.record_stopped.connect(w.record_stopped, Qt.DirectConnection)
         s.record_started.connect(lambda _path: self._status.rec.start())
         s.record_stopped.connect(self._status.rec.stop)
 

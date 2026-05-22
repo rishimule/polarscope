@@ -41,6 +41,10 @@ class LidarWorker(QObject):
         self._lidar: Optional[PyRPlidar] = None
         self._stop_event = threading.Event()
         self._recorder: Optional[CsvRecorder] = None
+        # Guards _recorder against races between the UI thread (which installs /
+        # removes the recorder mid-scan via record_started / record_stopped) and
+        # the worker thread (which writes to it from inside _emit_scan).
+        self._recorder_lock = threading.Lock()
         self._scan_idx = 0
         self._last_emit = 0.0
         self._hz_ema = 0.0
@@ -117,23 +121,30 @@ class LidarWorker(QObject):
 
     @Slot(str)
     def record_started(self, path: str) -> None:
-        if self._recorder is not None:
-            self._recorder.stop()
-            self._recorder = None
-        recorder = CsvRecorder(path)
-        try:
-            recorder.start()
-        except OSError as exc:
-            self.error_occurred.emit(f"Cannot record to {path}: {exc}")
-            self.record_failed.emit()
-            return
-        self._recorder = recorder
+        # Called directly from the UI thread (DirectConnection). Cannot be
+        # queued: the scan loop holds the worker's event loop while running,
+        # so a QueuedConnection slot would never dispatch mid-scan and the
+        # CSV would only contain its header.
+        with self._recorder_lock:
+            if self._recorder is not None:
+                self._recorder.stop()
+                self._recorder = None
+            recorder = CsvRecorder(path)
+            try:
+                recorder.start()
+            except OSError as exc:
+                self.error_occurred.emit(f"Cannot record to {path}: {exc}")
+                self.record_failed.emit()
+                return
+            self._recorder = recorder
 
     @Slot()
     def record_stopped(self) -> None:
-        if self._recorder is not None:
-            self._recorder.stop()
-            self._recorder = None
+        # Same threading rationale as record_started — DirectConnection from UI.
+        with self._recorder_lock:
+            if self._recorder is not None:
+                self._recorder.stop()
+                self._recorder = None
 
     @Slot()
     def start_scan(self) -> None:
@@ -276,14 +287,15 @@ class LidarWorker(QObject):
             self._hz_ema = 0.9 * self._hz_ema + 0.1 * (1.0 / dt)
         self.stats.emit(self._hz_ema, len(x))
 
-        if self._recorder is not None:
-            self._recorder.write(
-                scan_index=self._scan_idx,
-                timestamp_iso=datetime.now(timezone.utc).isoformat(),
-                angles_deg=a_deg_kept,
-                distances_m=r_m,
-                qualities=q,
-            )
+        with self._recorder_lock:
+            if self._recorder is not None:
+                self._recorder.write(
+                    scan_index=self._scan_idx,
+                    timestamp_iso=datetime.now(timezone.utc).isoformat(),
+                    angles_deg=a_deg_kept,
+                    distances_m=r_m,
+                    qualities=q,
+                )
         self._scan_idx += 1
 
     # ----- helpers -----
@@ -326,9 +338,10 @@ class LidarWorker(QObject):
             except Exception:
                 pass
             self._lidar = None
-        if self._recorder is not None:
-            try:
-                self._recorder.stop()
-            except Exception:
-                pass
-            self._recorder = None
+        with self._recorder_lock:
+            if self._recorder is not None:
+                try:
+                    self._recorder.stop()
+                except Exception:
+                    pass
+                self._recorder = None
