@@ -288,3 +288,54 @@ code, pre { font-family: var(--font-mono); }
   .arch__inner { grid-template-columns: 5fr 7fr; gap: 48px; }
   .arch__intro { position: sticky; top: 80px; align-self: start; }
 }
+
+.quick { padding: 64px 0 96px; border-top: 1px solid var(--border); }
+.quick h2 { margin-bottom: 24px; }
+.quick h3 { margin: 32px 0 12px; }
+
+.code-block {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 0 16px;
+}
+.code-block pre {
+  margin: 0;
+  padding: 20px 24px;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.copy {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+.copy:hover { color: var(--accent); border-color: var(--accent); }
+.copy.is-copied { color: var(--ok); border-color: var(--ok); }
+
+.hw {
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.hw li { margin-bottom: 6px; }
+.hw code {
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--text);
+}
